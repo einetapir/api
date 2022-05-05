@@ -41,10 +41,11 @@ jobs:
       ############# MODEL ###############
 
       - uses: docker-practice/actions-setup-docker@master
+      ######## change
       - run: |
           set -x
           docker version
-          container_id=$(docker create soootaleb/hetic-model:97ef10a)
+          container_id=$(docker create soootaleb/hetic-model:97ef10a) 
           docker cp "$container_id:/data/model.json" .
           echo "Extracting model version 97ef10a"
           pwd
