@@ -1,5 +1,5 @@
 a# This is a basic workflow to help you get started with Actions
-e: Build and Publish
+name: Build and Publish
 
 on:
   # run it on push to the default repository branch
