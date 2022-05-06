@@ -1,26 +1,33 @@
 # This is a basic workflow to help you get started with Actions
-name: Build and Publish
+name: api_actions
 
+
+# Controls when the workflow will run
 on:
-  # run it on push to the default repository branch
+  # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [main, cicd]
-  # run it during pull request
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
+  repository_dispatch:
+    types: [api_trigger]
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # define job to build and publish docker image
-  build-and-push-docker-image:
-    name: Build Docker image and push to repositories
-    # run only when code is compiling and tests are passing
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # steps to perform in job
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # setup Docker build action
+      # setup Docker buld action
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
@@ -29,39 +36,39 @@ jobs:
         uses: docker/login-action@v1
         with:
           username: einetapir
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      
-      - name: Set outputs
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Get sha short
         id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-        
-      - name: Check outputs
-        run: echo ${{ steps.vars.outputs.sha_short }}
+        run: echo ::set-output name=sha_short::$(git rev-parse --short HEAD)
 
-      ############# MODEL ###############
+      - name: get train_tag
+        id: train
+        run: |
+          if [${{ github.event.client_payload.sha }}[0] != null]
+          then
+              echo ::set-output name=tag::${{ github.event.client_payload.sha }}
+          else
+              echo ::set-output name=tag::"latest"
+          fi
 
-      - uses: docker-practice/actions-setup-docker@master
-      ######## change
-      - run: |
-          set -x
-          docker version
-          container_id=$(docker create einetapir/model:latest) 
-          docker cp "$container_id:/data/model.json" .
-          echo "Extracting model version latest"
-          pwd
-          ls -l .
-      ########### DOCKER ##################
+      - name: Volume create
+        run: docker volume create data
+
+      - name: Run model
+        run: docker run --name hetic-deploiement_model -v data:/data einetapir/model:${{ steps.train.outputs.tag }}
       
-      - name: Build image and push to Docker Hub and GitHub Container Registry
+      - name: Docker cp
+        run: docker cp model:model.json .
+
+      - name: Build api image and push to Docker Hub
         uses: docker/build-push-action@v2
         with:
-          # relative path to the place where source code with Dockerfile is located
           context: .
-          file: Api.dockerfile
-          # Note: tags has to be all lower-case
-          tags: einetapir/api:${{ steps.vars.outputs.sha_short }}
-          # build on feature branches, push only on main branch
-          push: true # ${{ github.ref == 'refs/heads/main' }}
-
+          push: true
+          tags: |
+            einetapir/api:latest
+            einetapir/api:${{ steps.vars.outputs.sha_short }}
+      
       - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: echo ${{ steps.docker_build.outputs.digest}}
