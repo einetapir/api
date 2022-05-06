@@ -53,10 +53,10 @@ jobs:
           fi
 
       - name: Volume create
-        run: docker volume create data
+        run: docker volume create shared
 
       - name: Run model
-        run: docker run --name hetic-deploiement_model -v data:/data einetapir/model:${{ steps.train.outputs.tag }}
+        run: docker run --name model -v shared:/data einetapir/model:${{ steps.train.outputs.tag }}
       
       - name: Docker cp
         run: docker cp model:model.json .
