@@ -28,7 +28,7 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
-          username: soootaleb
+          username: einetapir
           password: ${{ secrets.DOCKER_PASSWORD }}
       
       - name: Set outputs
@@ -45,9 +45,9 @@ jobs:
       - run: |
           set -x
           docker version
-          container_id=$(docker create soootaleb/hetic-model:97ef10a) 
+          container_id=$(docker create einetapir/model:latest) 
           docker cp "$container_id:/data/model.json" .
-          echo "Extracting model version 97ef10a"
+          echo "Extracting model version latest"
           pwd
           ls -l .
       ########### DOCKER ##################
@@ -59,7 +59,7 @@ jobs:
           context: .
           file: Api.dockerfile
           # Note: tags has to be all lower-case
-          tags: soootaleb/hetic-api:${{ steps.vars.outputs.sha_short }}
+          tags: einetapir/api:${{ steps.vars.outputs.sha_short }}
           # build on feature branches, push only on main branch
           push: true # ${{ github.ref == 'refs/heads/main' }}
 
