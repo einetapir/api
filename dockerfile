@@ -1,8 +1,8 @@
 FROM python:3
 
-COPY model.json /code/
-COPY app.py /code/
+COPY model.json .
+COPY app.py .
 
-RUN pip install Flask scikit-learn numpy
+RUN pip install Flask scikit-learn
 
-CMD [ "python", "/code/app.py" ]
+CMD [ "python", "app.py" ]
